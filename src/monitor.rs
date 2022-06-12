@@ -181,18 +181,20 @@ impl Monitor {
 
   // Gets the framebuffer port
   unsafe fn get_io_framebuffer_port(display: CGDisplay) -> Option<IoObject> {
-    if display.is_builtin() {
-      return None;
-    }
+    // TODO: check if this is needed
+    // if display.is_builtin() {
+    //   return None;
+    // }
 
-    let name = if ARCH == "aarch64" {
-      "IOMobileFramebuffer"
+    let io_object = if ARCH == "aarch64" {
+      IoIterator::for_services("IOMobileFramebuffer")?
+        .find(|framebuffer| Self::framebuffer_port_matches_display(framebuffer, display).is_none())
     } else {
-      "IOFramebuffer"
+      IoIterator::for_services("IOFramebuffer")?
+        .find(|framebuffer| Self::framebuffer_port_matches_display(framebuffer, display).is_some())
     };
 
-    IoIterator::for_services(name)?
-      .find(|framebuffer| Self::framebuffer_port_matches_display(framebuffer, display).is_some())
+    io_object
   }
 
   /// Get supported I2C / DDC transaction types
